@@ -1,0 +1,61 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    
+    
+}
+
+<div class="align-content-center text-center mt-5">
+    @if(ViewData["WrongModel"] != null)
+    {
+        <div class="text-danger fs-5 fw-bold">
+            @ViewData["WrongModel"].ToString()
+        </div>
+    }
+    <form method="post" enctype="multipart/form-data">
+        <div>
+            <div>
+                <label class="text-light mx-2">First Name:</label>
+            </div>
+
+            <input type="text" class="w-25" id="FirstName" required name="FirstName">
+        </div>
+       <div>
+            <div>
+                <label class="text-light mx-2">Last Name:</label>
+            </div>
+
+            <input type="text" class="w-25" id="LastName" required name="LastName">
+        </div>
+        <div>
+            <div>
+                <label class="text-light mx-2">Nick Name:</label>
+            </div>
+
+            <input type="text" class="w-25" id="NickName" required name="NickName">
+        </div>
+
+        <div>
+            <div>
+                <label class="text-light mx-2">Image:</label>
+            </div>
+
+            <input type="file" id="imageFile" name="imageFile" class="w-25 bg-light" required accept=".png,.jpg,.jpeg" />
+        </div>
+        <div>
+            <div>
+                <label class="text-light mx-2">Email:</label>
+            </div>
+
+            <input type="email" class="w-25" required name="Email">
+        </div>
+        <div>
+            <label class="text-light">Password:</label>
+            <div>
+                <input type="password" class="w-25" required name="UserPassword">
+            </div>
+        </div>
+        <button class="btn btn-danger p-1 mt-2" type="submit">Register</button>
+    </form>
+</div>

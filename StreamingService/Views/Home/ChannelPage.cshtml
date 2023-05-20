@@ -1,0 +1,103 @@
+﻿@model dynamic;
+@{
+    ViewData["Title"] = @Model.Creator.Nickname;
+}
+
+<div class="text-decoration-none text-light fw-bold">
+    <h3>
+        <img class="channel_page_logo" width="150" height="150" style="margin-right:20px;" src=@Model.Creator.ImagePath />
+        @Model.Creator.Nickname <label id="subscribersCount" class="fw-lighter fs-5 mx-1">@Model.SubscribersCount</label><label class="fw-lighter fs-5 mx-1">Subscribers</label>
+        @if (ViewContext.HttpContext.Session.GetInt32("UserId") != null  && Model.Creator.Id == ViewContext.HttpContext.Session.GetInt32("UserId"))
+        {
+            <a asp-action="MyPage" asp-controller="Home" class="btn btn-primary btn-sm mb-1">MY CABNET</a>
+        }
+        else if (ViewContext.HttpContext.Session.GetInt32("UserId") != null &&
+        Model.Creator.Id != ViewContext.HttpContext.Session.GetInt32("UserId") &&
+        Model.IsUserSubscribed == true)
+        {
+            <btn id="subscribeBtn" onclick="Subscribe()" class="btn btn-sm mb-1" style="background-color:rgb(150,150,150);">SUBSCRIBED</btn>
+        }
+        else if (ViewContext.HttpContext.Session.GetInt32("UserId") != null &&
+        Model.Creator.Id != ViewContext.HttpContext.Session.GetInt32("UserId") &&
+        Model.IsUserSubscribed == false)
+        {
+            <btn id="subscribeBtn" onclick="Subscribe()" class="btn btn-danger btn-sm mb-1">SUBSCRIBE</btn>
+        }
+        else
+        {
+            <btn onclick="NeedToLoginToSubscribeAlert()" class="btn btn-danger btn-sm mb-1">SUBSCRIBE</btn>
+        }
+    </h3>
+</div>
+<div class="border-bottom"><h3 class="text-light">Videos</h3></div>
+<div class="container">
+    <div class="d-flex row justify-content-right mb-3">
+        @foreach (var item in Model.CreatorVideos)
+        {
+            <div class="col-4">
+
+                <a asp-action="WatchPage" class="text-decoration-none title_max_lines" asp-route-VideoId=@item.Id asp-route-UserId=@Model.Creator.Id title=@item.Title asp-controller="Home">
+                    <div class="ratio ratio-16x9 mt-1 mb-2">
+                        <img class="card-img-top rounded_video_image mt-2" src=@item.VideoThumbnailPath alt="Card image cap">
+                    </div>
+                    <div class="card-body text-light p-0 fw-bold">
+                        <div class="card-text">@item.Title</div>
+                    </div>
+                </a>
+                <a asp-action="ChannelPage" asp-asp-controller="Home" asp-route-UserId=@Model.Creator.Id class="text-decoration-none text-light fw-bold" title="@Model.Creator.Nickname">
+                    @Model.Creator.Nickname
+                </a>
+                <div id="viewsField" class="text-light">
+                    @item.VideoViews views
+                </div>
+            </div>
+        }
+    </div>
+</div>
+<script>
+    let IsUserSubscribed = @Html.Raw(Json.Serialize(Model.IsUserSubscribed));
+    let currentUserId = @Html.Raw(Json.Serialize(Model.CurrentUser));
+
+    function Subscribe() {
+        if (IsUserSubscribed == true) {
+            IsUserSubscribed = false;
+            document.getElementById('subscribersCount').innerHTML = (Number(document.getElementById('subscribersCount').innerHTML) - 1)
+            document.getElementById('subscribeBtn').style.backgroundColor = "rgb(210,80,78)";
+            document.getElementById('subscribeBtn').textContent = "SUBSCRIBE";
+
+            $.ajax({
+                type: "POST",
+                url: "/Home/Subscribe",
+                data: {
+                    CreatorId: @Model.Creator.Id,
+                    FollowerId: currentUserId
+                },
+                success: function (result) {
+                    // Handle the result here
+                    console.log(result);
+                }
+            });
+        }
+        else {
+            IsUserSubscribed = true;
+            document.getElementById('subscribersCount').innerHTML = (Number(document.getElementById('subscribersCount').innerHTML) + 1)
+            document.getElementById('subscribeBtn').style.backgroundColor = "rgb(150,150,150)";
+            document.getElementById('subscribeBtn').textContent = "SUBSCRIBED";
+
+            $.ajax({
+                type: "POST",
+                url: "/Home/Subscribe",
+                data: {
+                    CreatorId: @Model.Creator.Id,
+                    FollowerId: currentUserId
+                },
+                success: function (result) {
+                    // Handle the result here
+                    console.log(result);
+                }
+            });
+        }
+
+    }
+
+</script>

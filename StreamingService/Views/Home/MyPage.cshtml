@@ -1,0 +1,192 @@
+﻿@model dynamic;
+@{
+    ViewData["Title"] = @Model.Creator.Nickname;
+}
+
+
+<div class="text-decoration-none text-light fw-bold">
+    <h3>
+        <img class="channel_page_logo" width="150" height="150" style="margin-right:20px;" src=@Model.Creator.ImagePath />
+        <btn type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#ChangeAccountImagePrompt">CHANGE IMAGE</btn>
+    </h3>
+
+    <label class="fs-3" style="margin-right:20px;">@Model.Creator.Nickname</label>
+    <btn type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#ChangeNicknamePrompt">CHANGE NICKNAME</btn>
+</div>
+<div class="border-bottom"><h3 class="text-light">Videos</h3></div>
+<div class="text-light w-100 text-center fs-5 fw-bold">
+        @ViewData["Message"]
+</div>
+<div class="text-center"><btn type="button" class="btn btn-success mt-2" data-bs-toggle="modal" data-bs-target="#AddVideoPrompt">ADD VIDEO</btn></div>
+<div class="container">
+    <div class="d-flex row justify-content-right mb-3">
+        @foreach (var item in Model.MyVideos)
+        {
+            <div class="col-4">
+                <a asp-action="WatchPage" class="text-decoration-none title_max_lines" asp-route-VideoId=@item.Id asp-route-UserId=@Model.Creator.Id title=@item.Title asp-controller="Home">
+                    <div class="ratio ratio-16x9 mt-1 mb-2">
+                        <img class="card-img-top rounded_video_image mt-2" src=@item.VideoThumbnailPath alt="Card image cap">
+
+                    </div>
+                    <div class="card-body text-light p-0 fw-bold">
+                        <div class="card-text">@item.Title</div>
+                    </div>
+                </a>
+                <a asp-action="ChannelPage" asp-asp-controller="Home" asp-route-UserId=@Model.Creator.Id class="text-decoration-none text-light fw-bold" title="@Model.Creator.Nickname">
+                    @Model.Creator.Nickname
+                </a>
+                <div id="viewsField" class="text-light">
+                    @item.VideoViews views
+                </div>
+                <div>
+                    <div><btn type="button" class="btn btn-primary p-0 w-100" data-bs-toggle="modal" data-bs-target=@("#ChangeVideoNamePrompt"+item.Id.ToString())>CHANGE TITLE</btn></div>
+                    <div><btn type="button" class="btn btn-success p-0 w-100" data-bs-toggle="modal" data-bs-target=@("#ChangeVideoImagePrompt"+item.Id.ToString())>CHANGE IMAGE</btn></div>
+                    <div><btn type="button" class="btn btn-danger p-0 w-100" data-bs-toggle="modal" data-bs-target=@("#DeleteVideoPrompt"+item.Id.ToString())>DELETE VIDEO</btn></div>
+                </div>
+            </div>
+
+            <!-- Delete Video -->
+            <div class="modal fade text-light" id=@("DeleteVideoPrompt"+item.Id.ToString()) aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content bg-dark">
+                        <form method="post" asp-action="DeleteVideo" asp-route-VideoId=@item.Id>
+                            <div class="modal-header border-bottom-0">
+                                <h5 class="modal-title text-center w-100" id="exampleModalLabel">Delete the video?</h5>
+                            </div>
+                            <div class="modal-footer border-top-0">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-danger">Delete</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Change Video Name -->
+            <div class="modal fade text-light" id=@("ChangeVideoNamePrompt"+item.Id.ToString()) aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content bg-dark">
+                        <form method="post" asp-action="ChangeVideoTitle" asp-route-VideoId=@item.Id asp-route-NewName=@Model.NewName enctype="multipart/form-data">
+                            <div class="modal-header border-bottom-0">
+                                <h5 class="modal-title text-center w-100" id="exampleModalLabel">Change Video Title</h5>
+                            </div>
+                            <div class="modal-body shadow-none text-decoration-none">
+                                <input type="text" minlength="1" required name="NewName" class="w-100 form-control border-0 shadow-none text-dark" />
+                            </div>
+                            <div class="modal-footer border-top-0">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Save changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Change Video Image -->
+            <div class="modal fade text-light" id=@("ChangeVideoImagePrompt"+item.Id.ToString()) aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content bg-dark">
+                        <form method="post" asp-action="ChangeVideoImage" asp-route-VideoId=@item.Id enctype="multipart/form-data">
+                            <div class="modal-header border-bottom-0">
+                                <h5 class="modal-title text-center w-100" id="exampleModalLabel">Upload a New Image</h5>
+                            </div>
+                            <div class="modal-body shadow-none text-decoration-none">
+                                <input type="file" name="imageFile" required class="w-100 form-control border-0 shadow-none text-dark" accept=".png,.jpg,.jpeg" />
+                            </div>
+                            <div class="modal-footer border-top-0">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Save changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Change Account Image -->
+<div class="modal fade text-light" id="ChangeAccountImagePrompt" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <form method="post" asp-action="UploadImage" asp-route-UserId=@Model.Creator.Id enctype="multipart/form-data">
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title text-center w-100" id="exampleModalLabel">Upload a New Image</h5>
+                </div>
+                <div class="modal-body shadow-none text-decoration-none">
+                    <input type="file" name="imageFile" class="w-100 form-control border-0 shadow-none text-dark" required accept=".png,.jpg,.jpeg" />
+                </div>
+                <div class="modal-footer border-top-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Change Nickname -->
+<div class="modal fade text-light" id="ChangeNicknamePrompt" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <form method="post" asp-action="ChangeUserName" asp-route-UserId=@Model.Creator.Id asp-route-NewName=@Model.NewName>
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title text-center w-100" id="exampleModalLabel">Upload a New Image</h5>
+                </div>
+                <div class="modal-body shadow-none text-decoration-none">
+                    <input type="text" minlength="1" required name="NewName" class="w-100 form-control border-0 shadow-none text-dark" />
+                </div>
+                <div class="modal-footer border-top-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- Add Video -->
+<div class="modal fade text-light" id="AddVideoPrompt" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <form method="post" asp-action="UploadVideo" id="MyForm" enctype="multipart/form-data" onsubmit="showVideoUploadStatus()">
+                <div>
+                    <div>
+                        <label class="text-light mx-2">Title:</label>
+                    </div>
+
+                    <input type="text" class="w-100" id="Title" required name="Title">
+                </div>
+                <div>
+                    <div>
+                        <label class="text-light mx-2">Description:</label>
+                    </div>
+
+                    <input type="text" class="w-100" id="Description" required name="Description">
+                </div>
+                <div>
+                    <div>
+                        <label class="text-light mx-2">Image:</label>
+                    </div>
+
+                    <input type="file" id="imageFile" name="imageFile" class="w-100 bg-light text-dark" required accept=".png,.jpg,.jpeg" />
+                </div>
+                <div>
+                    <div>
+                        <label class="text-light mx-2">Video:</label>
+                    </div>
+
+                    <input type="file" id="videoFile" name="videoFile" class="w-100 bg-light text-dark" required accept=".mp4" />
+                </div>
+                <button type="button" class="btn btn-secondary p-1 mt-2" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-danger p-1 mt-2" type="submit">Add Video</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Video is uploading -->
+<div id="VideoIsUploading" style="position: fixed;top: 0;left: 0;right: 0;bottom: 0;z-index: 9999;display: flex; background-color: rgba(0, 0, 0, 0.5); display:none;">
+    <div class="bg-dark w-25 p-3 rounded-3 text-center fw-light text-light" style="margin: 0 auto; margin-top:50vh;">Wait please, your video is uploading...</div>
+</div>

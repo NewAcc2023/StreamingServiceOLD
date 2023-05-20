@@ -1,0 +1,28 @@
+﻿@model dynamic;
+@{
+    ViewData["Title"] = "Home Page";
+}
+<h3 class="text-center text-light border-bottom mb-3">Your Liked Videos</h3>
+<div class=" align-content-center">
+
+    @foreach (var item in Model.LikedVideos)
+    {
+        //poisk imeni polzovatelya
+        Predicate<User> condition = user => user.Id == item.CreatorId;
+        User Creator = Model.VideoCreators.Find(condition);
+        <div class="col-4 mb-2" style="margin:auto;">
+            <a asp-action="WatchPage" class="text-decoration-none title_max_lines" asp-route-VideoId=@item.Id asp-route-UserId=@Creator.Id title=@item.Title asp-controller="Home">
+                <div class="ratio ratio-16x9 mt-1 mb-2"><img class="card-img-top rounded_video_image" src=@item.VideoThumbnailPath alt="Card image cap" /></div>
+                <div class="card-body text-light p-0 fw-lighter fs-6">
+                    <div class="card-text">@item.Title</div>
+                </div>
+            </a>
+            <a asp-action="ChannelPage" asp-asp-controller="Home" asp-route-UserId=@Creator.Id class="text-decoration-none text-light fs-6" title="@Creator.Nickname">
+                @Creator.Nickname
+            </a>
+            <div id="viewsField" class="text-light">
+                @item.VideoViews views
+            </div>
+        </div>
+    }
+</div>

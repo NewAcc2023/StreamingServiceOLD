@@ -1,0 +1,59 @@
+﻿@model dynamic;
+@{
+    ViewData["Title"] = "Subscriptions";
+}
+
+<div class="row">
+    @foreach (var item in Model.Creators)
+    {
+        <div class="text-decoration-none text-light bg-dark text-center rounded-3 fw-bold col-md-3 m-1">
+            <div><img class="channel_page_logo mt-2" width="128" height="128" style="margin-right:10px;" src=@item.ImagePath /></div>
+            <div><label class="fs-3" style="margin-right:10px;"><a asp-action="ChannelPage" class="text-decoration-none text-light" asp-route-UserId=@item.Id>@item.Nickname</a></label></div>
+            <div><label id=@("subscribersCount"+item.Id.ToString()) class="fw-lighter fs-6">@Model.Map[item.Id]</label><label class="fw-lighter fs-6">&nbsp;Subscribers</label></div>
+            <div><button id=@("subscribeBtn"+item.Id.ToString()) onclick="Subscribe1(@item.Id, @("subscribeBtn"+item.Id.ToString()), @("subscribersCount"+item.Id.ToString()))" class="btn btn-sm mb-2 text-light" style="background-color:rgb(150,150,150);">SUBSCRIBED</button></div>
+        </div>
+    }
+</div>
+<script>
+    let currentUserId = @Html.Raw(Json.Serialize(Model.CurrentUser));
+
+    function Subscribe1(id, btn, count) {
+        console.log("was called");
+        console.log(document.getElementById(btn.id).textContent);
+        if (document.getElementById(btn.id).textContent == "SUBSCRIBED") {
+            document.getElementById(count.id).innerHTML = (Number(document.getElementById(count.id).innerHTML) - 1);
+            document.getElementById(btn.id).style.backgroundColor = "rgb(210,80,78)";
+            document.getElementById(btn.id).textContent = "SUBSCRIBE";
+
+            $.ajax({
+                type: "POST",
+                url: "/Home/Subscribe",
+                data: {
+                    CreatorId: id,
+                    FollowerId: currentUserId
+                },
+                success: function (result) {
+                    // Handle the result here
+                    console.log(result);
+                }
+            });
+        }
+        else {
+            document.getElementById(count.id).innerHTML = (Number(document.getElementById(count.id).innerHTML) + 1);
+            document.getElementById(btn.id).style.backgroundColor = "rgb(150,150,150)";
+            document.getElementById(btn.id).textContent = "SUBSCRIBED";
+            $.ajax({
+                type: "POST",
+                url: "/Home/Subscribe",
+                data: {
+                    CreatorId: id,
+                    FollowerId: currentUserId
+                },
+                success: function (result) {
+                    // Handle the result here
+                    console.log(result);
+                }
+            });
+        }
+    }
+</script>

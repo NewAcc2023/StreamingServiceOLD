@@ -1,0 +1,359 @@
+﻿@model dynamic;
+@{
+	ViewData["Title"] = "Video title";
+}
+<div id="copyMessage" style="display:none;position:fixed; top:8%; left:50%; transform:translate(-50%, -50%); padding:12px; border:1px solid black; border-radius:5px; box-shadow:0 0 12px rgba(0,0,0,0.5); z-index:9999;">
+	Link is copied!
+</div>
+<div class="row">
+	<div class="col-9">
+		<div class="col-md p-0 m-1">
+			<div class="ratio ratio-16x9 mt-1 mb-2">
+				@* <img  src=@Model.Video.VideoThumbnailPath alt="Card image cap">*@
+
+				<video controls class="card-img-top rounded_video_player mt-2" autoplay="autoplay">
+					<source src=@Model.Video.VideoPath type="video/mp4">
+					Your browser does not support the video tag.
+				</video>
+			</div>
+			<div class="card-body text-light p-0 fw-bold">
+				<p class="card-text fs-5">@Model.Video.Title</p>
+			</div>
+			<div class="text-light mt-2">
+				@*ChannelLogo_Name_SubscribeBtn_LikeDislike_Share*@
+				<div id="video_attributes" class="d-flex justify-content-between">
+					<div>
+						<a asp-action="ChannelPage" asp-controller="Home" asp-route-UserId=@Model.Creator.Id class="text-decoration-none text-light fw-bold">
+							<img class="channel_logo" width="40" height="40" src=@Model.Creator.ImagePath />
+							@Model.Creator.Nickname
+						</a>
+						<label id="subscribersCount" class="fw-lighter mx-1">@Model.SubscribersCount</label><label>Subscribers</label>
+						@if (ViewContext.HttpContext.Session.GetInt32("UserId") != null && Model.Creator.Id == ViewContext.HttpContext.Session.GetInt32("UserId"))
+						{
+							<a asp-action="MyPage" asp-controller="Home" asp-route-UserId=@Model.Creator.Id class="btn btn-primary btn-sm mb-1">MY CABNET</a>
+						}
+						else if (ViewContext.HttpContext.Session.GetInt32("UserId") != null &&
+						Model.Creator.Id != ViewContext.HttpContext.Session.GetInt32("UserId") &&
+						Model.IsUserSubscribed == true)
+						{
+							<btn onclick="Subscribe()" class="btn text-light btn-sm mb-1" id="subscribeBtn" style="background-color:rgb(150,150,150);">SUBSCRIBED</btn>
+						}
+						else if (ViewContext.HttpContext.Session.GetInt32("UserId") != null &&
+						Model.Creator.Id != ViewContext.HttpContext.Session.GetInt32("UserId") &&
+						Model.IsUserSubscribed == false)
+						{
+							<btn onclick="Subscribe()" id="subscribeBtn" class="btn btn-danger btn-sm mb-1">SUBSCRIBE</btn>
+						}
+						else
+						{
+							<btn onclick="NeedToLoginToSubscribeAlert()" class="btn btn-danger btn-sm mb-1">SUBSCRIBE</btn>
+						}
+					</div>
+					<div>
+						<div class="d-flex textSelectionDisable">
+							@if (ViewContext.HttpContext.Session.GetInt32("UserId") != null)
+							{
+								<btn onclick="Like()" class="text-decoration-none text-light" style=" margin-right:15px;">
+									@if (Model.IsLikePressed)
+									{
+										<i id="likeIcon" class="fas fa-thumbs-up fs-5" style="color:lightgreen;"></i>
+									}
+									else
+									{
+										<i id="likeIcon" class="fas fa-thumbs-up fs-5" style="color:lightgray;"></i>
+									}
+									<label id="like">@Model.VideoLikes</label>
+								</btn>
+
+								<btn onclick="Dislike()" class="text-decoration-none text-light">
+
+									@if (Model.IsDislikePressed)
+									{
+										<i id="dislikeIcon" class="fas fa-thumbs-down fs-5" style="color:red;"></i>
+									}
+									else
+									{
+										<i id="dislikeIcon" class="fas fa-thumbs-down fs-5" style="color:lightgray;"></i>
+									}
+									<label id="dislike">@Model.VideoDislikes</label>
+								</btn>
+							}
+							else
+							{
+								<a onclick="NeedToLoginToLikeDislikeAlert()" class="text-decoration-none text-light" style=" margin-right:15px;">
+									<i id="likeIcon" class="fas fa-thumbs-up fs-5" style="color:lightgray;"></i>
+									<label id="like">@Model.VideoLikes</label>
+								</a>
+
+								<a onclick="NeedToLoginToLikeDislikeAlert()" class="text-decoration-none text-light">
+									<i id="dislikeIcon" class="fas fa-thumbs-down fs-5" style="color:lightgray;"></i>
+									<label id="dislike">@Model.VideoDislikes</label>
+								</a>
+							}
+
+
+							<btn id="copyButton" onclick="copyToClipboard()" class="text-decoration-none text-light" style="margin-left:18px;">
+								<i class="fas fa-share mx-1"></i>
+								Share
+							</btn>
+						</div>
+					</div>
+				</div>
+				<div class="text-light">
+					<div class="mb-3">@Model.Video.VideoViews views</div>
+				</div>
+				<div>
+					<h3 class="border-top">Description</h3>
+					@Model.Video.Description
+				</div>
+			</div>
+		</div>
+		<div class="text-light border-top mt-5">
+			<h3>Comments</h3>
+			<div>
+				<div class="col-12">
+					@if (@ViewContext.HttpContext.Session.GetInt32("UserId") != null)
+					{
+						<div class="form-group">
+							<h4 class="fs-5 fw-lighter">Leave a comment</h4>
+							<textarea name="msg" placeholder="Write your comment" required id="CommentText" msg cols="10" rows="5" class="form-control bg-dark text-light"></textarea>
+						</div>
+						<a onclick="AddComment()" class="btn btn-success offcanvas-back p-1 mt-2">Post Comment</a>
+					}
+					else
+					{
+						<div class="bg-dark text-center"><label class="mt-2">To leave a comment</label><br><a asp-action="LogIn" asp-controller="Account" class="btn btn-danger border-1 mt-1 mb-3">LogIn</a></div>
+					}
+
+					<div id="allComments">
+						@foreach (var com in Model.Comments)
+						{
+							Predicate<User> condition = user => user.Id == com.UserId;
+							User Creator = Model.RelatedVideoCreators.Find(condition);
+							<div class="comment mt-4 text-justify float-left col-12">
+								<img src=@Creator.ImagePath alt="" class="rounded-circle" width="40" height="40">
+								<label class="fs-5 fw-bold mx-2"><a class="text-light text-decoration-none" asp-action="ChannelPage" asp-route-UserId=@com.UserId>@Creator.Nickname</a></label><label class="fs-6 fw-lighter">@com.AddedAt</label>
+								<br>
+								<p>@com.CommentText</p>			
+							</div>
+						}
+					</div>
+
+
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="col-3">
+		@foreach (var item in Model.RelatedVideos)
+		{
+			Predicate<User> condition = user => user.Id == item.CreatorId;
+			User Creator = Model.RelatedVideoCreators.Find(condition);
+			<a asp-action="WatchPage" class="text-decoration-none title_max_lines" asp-route-VideoId=@item.Id asp-route-UserId=@Creator.Id title=@item.Title asp-controller="Home">
+				<div class="ratio ratio-16x9 mt-1 mb-2"><img class="card-img-top rounded_video_image mt-2" src=@item.VideoThumbnailPath alt="Card image cap"></div>
+				<div class="card-body text-light p-0 fw-bold">
+					<div class="card-text">@item.Title</div>
+				</div>
+			</a>
+			<a asp-action="ChannelPage" asp-asp-controller="Home" asp-route-UserId=@Creator.Id class="text-decoration-none text-light fw-bold" title="@Creator.Nickname">
+				@Creator.Nickname
+			</a>
+			<div id="viewsField" class="text-light">
+				@item.VideoViews views
+			</div>
+		}
+	</div>
+</div>
+
+<script>
+
+	function copyToClipboard() {
+		var currentUrl = window.location.href;
+		navigator.clipboard.writeText(currentUrl);
+		document.getElementById("copyMessage").classList.add("w-50");
+		document.getElementById("copyMessage").classList.add("justify-content-center");
+		document.getElementById("copyMessage").classList.add("body_bg");
+		document.getElementById("copyMessage").classList.add("fw-bold");
+		document.getElementById("copyMessage").classList.add("text-light");
+		
+		document.getElementById("copyMessage").style.display = "flex";
+		setTimeout(function () { document.getElementById("copyMessage").style.display = "none"; }, 2000);
+	}
+	let IsLikePressed = @Html.Raw(Json.Serialize(Model.IsLikePressed));
+	let IsDislikePressed = @Html.Raw(Json.Serialize(Model.IsDislikePressed));
+	let IsUserSubscribed = @Html.Raw(Json.Serialize(Model.IsUserSubscribed));
+	let currentUserId = @Html.Raw(Json.Serialize(Model.CurrentUserId));
+	let currentUserNickname = @Html.Raw(Json.Serialize(Model.CurrentUserNickname));
+	let currentUserImagePath = @Html.Raw(Json.Serialize(Model.CurrentUserImagePath));
+	let timeNow = @Html.Raw(Json.Serialize(DateTime.Now.ToString()));
+
+
+
+	function AddComment() {
+		if (document.getElementById('CommentText').value == "") {
+			alert("Empty Comments Not Allowed");
+			return
+		}
+		if (document.getElementById('CommentText').value.replace(/ /g, '') == "") {
+			alert("Empty Comments Not Allowed");
+			return
+		}
+		$.ajax({
+			type: "POST",
+			url: "/Home/AddComment",
+			data:
+			{
+				UserId: currentUserId,
+				VideoId: @Model.Video.Id,
+				CommentText: document.getElementById('CommentText').value
+			},
+			success: function () {
+				const allComments = document.getElementById('allComments');
+				const mydiv = new generateDiv(currentUserNickname, document.getElementById('CommentText').value, currentUserImagePath, timeNow);
+				allComments.insertBefore(mydiv, allComments.firstChild);
+				document.getElementById('CommentText').value = " ";
+			},
+			error: function () {
+				alert("Empty Comments Not Allowed");
+			}
+		});
+	}
+
+	function Subscribe() {
+		if (IsUserSubscribed == true) {
+			IsUserSubscribed = false;
+			document.getElementById('subscribersCount').innerHTML = (Number(document.getElementById('subscribersCount').innerHTML) - 1)
+			document.getElementById('subscribeBtn').style.backgroundColor = "rgb(210,80,78)";
+			document.getElementById('subscribeBtn').textContent = "SUBSCRIBE";
+
+			$.ajax({
+				type: "POST",
+				url: "/Home/Subscribe",
+				data: {
+					CreatorId: @Model.Video.CreatorId,
+					FollowerId: currentUserId
+				},
+				success: function (result) {
+					// Handle the result here
+					console.log(result);
+				}
+			});
+		}
+		else {
+			IsUserSubscribed = true;
+			document.getElementById('subscribersCount').innerHTML = (Number(document.getElementById('subscribersCount').innerHTML) + 1)
+			document.getElementById('subscribeBtn').style.backgroundColor = "rgb(150,150,150)";
+			document.getElementById('subscribeBtn').textContent = "SUBSCRIBED";
+
+			$.ajax({
+				type: "POST",
+				url: "/Home/Subscribe",
+				data: {
+					CreatorId: @Model.Video.CreatorId,
+					FollowerId: currentUserId
+				},
+				success: function (result) {
+					// Handle the result here
+					console.log(result);
+				}
+			});
+		}
+	}
+
+	function Like() {
+		if (IsLikePressed && currentUserId != 0) {
+			RemoveLike();
+			$.ajax({
+				type: "POST",
+				url: "/Home/AddLike",
+				data: {
+					VideoId: @Model.Video.Id,
+					UserId: currentUserId
+				},
+				success: function (result) {
+					// Handle the result here
+					console.log(result);
+				}
+			});
+		}
+		else {
+			if (IsDislikePressed && currentUserId != 0) {
+				RemoveDislike();
+			}
+			AddLike();
+			$.ajax({
+				type: "POST",
+				url: "/Home/AddLike",
+				data: {
+					VideoId: @Model.Video.Id,
+					UserId: currentUserId
+				},
+				success: function (result) {
+					// Handle the result here
+					console.log(result);
+				}
+			});
+		}
+	}
+
+	function Dislike() {
+		if (IsDislikePressed && currentUserId != 0) {
+			RemoveDislike();
+			$.ajax({
+				type: "POST",
+				url: "/Home/AddDislike",
+				data: {
+					VideoId: @Model.Video.Id,
+					UserId: currentUserId
+				},
+				success: function (result) {
+					// Handle the result here
+					console.log(result);
+				}
+			});
+		}
+		else {
+			if (IsLikePressed && currentUserId != 0) {
+				RemoveLike();
+			}
+			AddDislike();
+			$.ajax({
+				type: "POST",
+				url: "/Home/AddDislike",
+				data: {
+					VideoId: @Model.Video.Id,
+					UserId: currentUserId
+				},
+				success: function (result) {
+					// Handle the result here
+					console.log(result);
+				}
+			});
+		}
+	}
+
+	function AddLike() {
+		IsLikePressed = true;
+		document.getElementById('like').innerHTML = (Number(document.getElementById('like').innerHTML) + 1)
+		document.getElementById('likeIcon').style.color = "lightgreen";
+	}
+
+	function AddDislike() {
+		IsDislikePressed = true;
+		document.getElementById('dislike').innerHTML = (Number(document.getElementById('dislike').innerHTML) + 1)
+		document.getElementById('dislikeIcon').style.color = "red";
+	}
+
+	function RemoveLike() {
+		IsLikePressed = false;
+		document.getElementById('like').innerHTML = (Number(document.getElementById('like').innerHTML) - 1)
+		document.getElementById('likeIcon').style.color = "lightgray";
+	}
+
+	function RemoveDislike() {
+		IsDislikePressed = false;
+		document.getElementById('dislike').innerHTML = (Number(document.getElementById('dislike').innerHTML) - 1)
+		document.getElementById('dislikeIcon').style.color = "lightgray";
+	}
+
+</script>

@@ -1,0 +1,30 @@
+﻿<div class="align-content-center text-center mt-5">
+    @if (ViewData["WrongModel"] != null)
+    {
+        <div class="text-danger fs-5 fw-bold">
+            @ViewData["WrongModel"].ToString()
+        </div>
+    }
+
+    <form method="post">
+        <div>
+            <div>
+                <label class="text-light mx-2" for="Email">Email:</label>
+            </div>
+
+            <input type="email" class="w-25" id="Email" name="Email">
+        </div>
+        <div>
+            <label class="text-light" for="Password">Password:</label>
+            <div>
+                <input type="password" class="w-25" id="UserPassword" name="UserPassword">
+            </div>
+        </div>
+        <button class="btn btn-danger p-1 mt-2" type="submit">Login</button>
+    </form>
+    <div class="text-center mt-5">
+        <div><label class="fw-lighter fs-5">Don't have an account?<br>Create one</label></div>
+        <a asp-action="Register" asp-controller="Account" class="btn btn-primary p-1 mt-2">Register</a>
+    </div>
+
+</div>
